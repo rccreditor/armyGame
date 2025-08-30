@@ -21,6 +21,14 @@ interface Enemy {
     options: string[];
     correctAnswer: number;
   };
+  // Animation properties
+  startX: number;
+  startY: number;
+  movementPattern: 'patrol' | 'cover' | 'advance' | 'strafe';
+  movementPhase: number;
+  lastMovementTime: number;
+  movementSpeed: number;
+  direction: number; // 1 for right, -1 for left
 }
 
 interface GameCanvasProps {
@@ -40,7 +48,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     weapon?: HTMLImageElement;
     enemies: HTMLImageElement[];
   }>({ enemies: [] });
-
+  const [lastFrameTime, setLastFrameTime] = useState(0);
+  const [muzzleFlash, setMuzzleFlash] = useState({ active: false, x: 0, y: 0, time: 0 });
+  const [hitEffects, setHitEffects] = useState<Array<{x: number, y: number, time: number, id: number}>>([]);
+  const [screenShake, setScreenShake] = useState({ active: false, time: 0, intensity: 0 });
 
   // Sample MCQ questions for Mission 1
   const questions = [
@@ -71,6 +82,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     }
   ];
 
+  // Enemy movement patterns
+  const getMovementPattern = (index: number) => {
+    const patterns: ('patrol' | 'cover' | 'advance' | 'strafe')[] = ['patrol', 'cover', 'advance', 'strafe', 'cover'];
+    return patterns[index];
+  };
 
   // Load images
   useEffect(() => {
@@ -108,7 +124,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
         { x: 1620, y: 450 }  // Far right
       ];
 
-      // Initialize 5 enemies using the same transparent image but different questions and positions
+      // Initialize 5 enemies with movement patterns
       const initialEnemies: Enemy[] = questions.map((question, index) => ({
         id: index,
         x: enemyPositions[index].x,
@@ -117,13 +133,136 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
         height: 400, // Height for full-body transparent image
         alive: true,
         image: enemyImg,
-        question: question
+        question: question,
+        startX: enemyPositions[index].x,
+        startY: enemyPositions[index].y,
+        movementPattern: getMovementPattern(index),
+        movementPhase: 0,
+        lastMovementTime: 0,
+        movementSpeed: 0.5 + Math.random() * 0.5, // Random speed between 0.5 and 1.0
+        direction: Math.random() > 0.5 ? 1 : -1
       }));
 
       setEnemies(initialEnemies);
     };
 
     loadImages();
+  }, []);
+
+  // Update enemy positions based on movement patterns
+  const updateEnemyMovement = useCallback((deltaTime: number) => {
+    setEnemies(prev => prev.map(enemy => {
+      if (!enemy.alive) return enemy;
+
+      const currentTime = Date.now();
+      const timeSinceLastMove = currentTime - enemy.lastMovementTime;
+      
+      if (timeSinceLastMove < 50) return enemy; // Update every 50ms
+
+      let newX = enemy.x;
+      let newY = enemy.y;
+      let newDirection = enemy.direction;
+      let newPhase = enemy.movementPhase;
+
+      switch (enemy.movementPattern) {
+        case 'patrol':
+          // Patrol back and forth with varying speeds
+          const patrolSpeed = enemy.movementSpeed * (0.8 + Math.sin(Date.now() * 0.001 + enemy.id) * 0.2);
+          newX = enemy.x + (enemy.direction * patrolSpeed * deltaTime * 0.1);
+          
+          if (newX > enemy.startX + 120 || newX < enemy.startX - 120) {
+            newDirection = -enemy.direction;
+            newX = enemy.x; // Stay in place when changing direction
+          }
+          break;
+
+        case 'cover':
+          // Move to cover positions with tactical movement
+          if (enemy.movementPhase === 0) {
+            // Move to cover
+            newX = enemy.x - (enemy.movementSpeed * deltaTime * 0.08);
+            if (newX <= enemy.startX - 60) {
+              newPhase = 1;
+              newX = enemy.startX - 60; // Snap to cover position
+            }
+          } else if (enemy.movementPhase === 1) {
+            // Stay in cover for a while
+            if (timeSinceLastMove > 2000) { // Stay in cover for 2 seconds
+              newPhase = 2;
+            }
+          } else if (enemy.movementPhase === 2) {
+            // Return from cover
+            newX = enemy.x + (enemy.movementSpeed * deltaTime * 0.08);
+            if (newX >= enemy.startX) {
+              newPhase = 0;
+              newX = enemy.startX;
+            }
+          }
+          break;
+
+        case 'advance':
+          // Advance forward with tactical pauses
+          if (enemy.movementPhase === 0) {
+            // Advance
+            newX = enemy.x - (enemy.movementSpeed * deltaTime * 0.05);
+            if (newX < enemy.startX - 100) {
+              newPhase = 1;
+              newX = enemy.startX - 100;
+            }
+          } else if (enemy.movementPhase === 1) {
+            // Pause and assess
+            if (timeSinceLastMove > 1500) { // Pause for 1.5 seconds
+              newPhase = 2;
+            }
+          } else if (enemy.movementPhase === 2) {
+            // Return to start
+            newX = enemy.x + (enemy.movementSpeed * deltaTime * 0.05);
+            if (newX >= enemy.startX) {
+              newPhase = 0;
+              newX = enemy.startX;
+            }
+          }
+          break;
+
+        case 'strafe':
+          // Strafe left and right with quick movements
+          if (enemy.movementPhase === 0) {
+            // Strafe left
+            newX = enemy.x - (enemy.movementSpeed * deltaTime * 0.15);
+            if (newX <= enemy.startX - 80) {
+              newPhase = 1;
+              newX = enemy.startX - 80;
+            }
+          } else if (enemy.movementPhase === 1) {
+            // Pause
+            if (timeSinceLastMove > 1000) { // Pause for 1 second
+              newPhase = 2;
+            }
+          } else if (enemy.movementPhase === 2) {
+            // Strafe right
+            newX = enemy.x + (enemy.movementSpeed * deltaTime * 0.15);
+            if (newX >= enemy.startX + 80) {
+              newPhase = 3;
+              newX = enemy.startX + 80;
+            }
+          } else if (enemy.movementPhase === 3) {
+            // Pause
+            if (timeSinceLastMove > 1000) { // Pause for 1 second
+              newPhase = 0;
+            }
+          }
+          break;
+      }
+
+      return {
+        ...enemy,
+        x: newX,
+        y: newY,
+        direction: newDirection,
+        movementPhase: newPhase,
+        lastMovementTime: currentTime
+      };
+    }));
   }, []);
 
   // Draw game scene
@@ -136,6 +275,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Apply screen shake effect
+    if (screenShake.active) {
+      const shakeAge = Date.now() - screenShake.time;
+      if (shakeAge < 200) { // Shake lasts 200ms
+        const shakeIntensity = screenShake.intensity * (1 - shakeAge / 200);
+        const shakeX = (Math.random() - 0.5) * shakeIntensity;
+        const shakeY = (Math.random() - 0.5) * shakeIntensity;
+        ctx.translate(shakeX, shakeY);
+      } else {
+        setScreenShake(prev => ({ ...prev, active: false }));
+      }
+    }
 
     // Draw background
     if (gameImages.background) {
@@ -145,11 +297,53 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     // Draw enemies
     enemies.forEach(enemy => {
       if (enemy.alive) {
-        ctx.drawImage(enemy.image, enemy.x, enemy.y, enemy.width, enemy.height);
+        // Save context for transformations
+        ctx.save();
+        
+        // Add subtle rotation based on movement direction
+        const rotationAngle = Math.sin(Date.now() * 0.002 + enemy.id) * 0.02;
+        ctx.translate(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
+        ctx.rotate(rotationAngle);
+        
+        // Draw enemy with shadow effect
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        
+        ctx.drawImage(enemy.image, -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
+        
+        // Restore context
+        ctx.restore();
+      }
+    });
+    
+    // Draw hit effects
+    hitEffects.forEach((effect, index) => {
+      const effectAge = Date.now() - effect.time;
+      if (effectAge < 500) { // Effect lasts 500ms
+        const effectSize = 40 - (effectAge / 500) * 30;
+        const effectAlpha = 1 - (effectAge / 500);
+        
+        ctx.save();
+        ctx.globalAlpha = effectAlpha;
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 15;
+        
+        // Draw expanding circle effect
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, effectSize, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        // Remove expired effects
+        setHitEffects(prev => prev.filter((_, i) => i !== index));
       }
     });
 
-    // Draw weapon with parallax effect
+    // Draw weapon with enhanced aim movement
     if (gameImages.weapon) {
       const weaponWidth = 800;
       const weaponHeight = 600;
@@ -158,18 +352,58 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
       const baseWeaponX = canvas.width - weaponWidth;
       const baseWeaponY = canvas.height - weaponHeight;
 
-      // Calculate the parallax offset based on the crosshair position
-      const parallaxFactor = 0.1;
-      const offsetX = (canvas.width / 2 - crosshairPos.x) * parallaxFactor;
-      const offsetY = (canvas.height / 2 - crosshairPos.y) * parallaxFactor;
-
-      // Apply the parallax offset to the weapon position
-      const weaponX = baseWeaponX + offsetX;
-      const weaponY = baseWeaponY + offsetY;
+      // Enhanced aim movement with multiple factors
+      const aimFactor = 0.2; // How much the gun follows the crosshair
+      const recoilFactor = 0.08; // Subtle recoil effect
+      
+      // Calculate aim offset based on crosshair position
+      const aimOffsetX = (canvas.width / 2 - crosshairPos.x) * aimFactor;
+      const aimOffsetY = (canvas.height / 2 - crosshairPos.y) * aimFactor;
+      
+      // Add dynamic recoil effect based on time
+      const currentTime = Date.now();
+      const recoilTime = currentTime * 0.01;
+      const recoilOffsetX = Math.sin(recoilTime) * recoilFactor * 8 + 
+                           Math.sin(recoilTime * 2.3) * recoilFactor * 4;
+      const recoilOffsetY = Math.cos(recoilTime * 0.8) * recoilFactor * 6 + 
+                           Math.sin(recoilTime * 1.7) * recoilFactor * 3;
+      
+      // Add breathing effect for more realism
+      const breathingOffset = Math.sin(currentTime * 0.003) * 2;
+      
+      // Apply all offsets to weapon position
+      const weaponX = baseWeaponX + aimOffsetX + recoilOffsetX;
+      const weaponY = baseWeaponY + aimOffsetY + recoilOffsetY + breathingOffset;
 
       ctx.drawImage(gameImages.weapon, weaponX, weaponY, weaponWidth, weaponHeight);
+      
+      // Draw muzzle flash if active
+      if (muzzleFlash.active) {
+        const flashAge = Date.now() - muzzleFlash.time;
+        if (flashAge < 100) { // Flash lasts 100ms
+          const flashSize = 30 - (flashAge / 100) * 20;
+          const flashAlpha = 1 - (flashAge / 100);
+          
+          ctx.save();
+          ctx.globalAlpha = flashAlpha;
+          ctx.fillStyle = '#ffff00';
+          ctx.shadowColor = '#ffff00';
+          ctx.shadowBlur = 20;
+          
+          // Draw muzzle flash at weapon tip
+          const flashX = weaponX + weaponWidth - 50;
+          const flashY = weaponY + weaponHeight / 2;
+          
+          ctx.beginPath();
+          ctx.arc(flashX, flashY, flashSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          setMuzzleFlash(prev => ({ ...prev, active: false }));
+        }
+      }
     }
-  }, [enemies, gameImages, crosshairPos]);
+  }, [enemies, gameImages, crosshairPos, muzzleFlash, hitEffects, screenShake]);
 
   // Handle mouse movement for crosshair
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -207,7 +441,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
 
     if (hitEnemy) {
       setSelectedEnemy(hitEnemy);
+      
+      // Add hit effect at enemy location
+      setHitEffects(prev => [...prev, {
+        x: hitEnemy.x + hitEnemy.width / 2,
+        y: hitEnemy.y + hitEnemy.height / 2,
+        time: Date.now(),
+        id: Date.now()
+      }]);
     }
+    
+    // Trigger muzzle flash
+    setMuzzleFlash({
+      active: true,
+      x: clickX,
+      y: clickY,
+      time: Date.now()
+    });
+    
+    // Trigger screen shake
+    setScreenShake({
+      active: true,
+      time: Date.now(),
+      intensity: 8
+    });
   }, [enemies]);
 
   // Handle MCQ answer
@@ -249,14 +506,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     setSelectedEnemy(null);
   }, [selectedEnemy, enemies, score, onGameOver, onMissionComplete]);
 
-  // Animation loop
+  // Animation loop with enemy movement
   useEffect(() => {
-    const animate = () => {
+    let animationId: number;
+    let lastTime = 0;
+
+    const animate = (currentTime: number) => {
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+
+      // Update enemy movement
+      updateEnemyMovement(deltaTime);
+      
+      // Draw the scene
       draw();
-      requestAnimationFrame(animate);
+      
+      animationId = requestAnimationFrame(animate);
     };
-    animate();
-  }, [draw]);
+
+    animationId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [draw, updateEnemyMovement]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900">
