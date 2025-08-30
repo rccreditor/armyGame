@@ -28,12 +28,12 @@ const MissionComplete: React.FC<MissionCompleteProps> = ({ score, onRestart }) =
           <div className="mb-8">
             <div className="grid grid-cols-2 gap-8 text-center">
               <div className="bg-primary/10 p-4 rounded-lg">
-                <div className="text-3xl font-bold text-primary-foreground">{score}/4</div>
+                <div className="text-3xl font-bold text-primary-foreground">{score}/5</div>
                 <div className="text-sm text-muted-foreground">ACCURACY</div>
               </div>
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="text-3xl font-bold text-primary-foreground">
-                  {score === 4 ? 'PERFECT' : score >= 3 ? 'EXCELLENT' : score >= 2 ? 'GOOD' : 'FAIR'}
+                  {score === 5 ? 'PERFECT' : score >= 4 ? 'EXCELLENT' : score >= 2 ? 'GOOD' : 'FAIR'}
                 </div>
                 <div className="text-sm text-muted-foreground">RATING</div>
               </div>
