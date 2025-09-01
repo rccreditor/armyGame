@@ -129,3 +129,43 @@
     transform: translateY(0px) rotate(0deg);
   }
 }
+
+/* Blood splatter animation */
+@keyframes blood-splatter {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.5) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Bullet trail effect */
+@keyframes bullet-trail {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+/* Gun spark animation */
+@keyframes gun-spark {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(180deg);
+  }
+}
