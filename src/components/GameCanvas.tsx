@@ -58,6 +58,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
   const [bloodParticles, setBloodParticles] = useState<Array<{x: number, y: number, vx: number, vy: number, time: number, id: number, size: number}>>([]);
   const [playerDamageEffects, setPlayerDamageEffects] = useState<Array<{x: number, y: number, vx: number, vy: number, time: number, id: number, size: number}>>([]);
   const [enemyFallingStates, setEnemyFallingStates] = useState<Array<{enemyId: number, startTime: number, startX: number, startY: number, phase: number}>>([]);
+  const [screenFlash, setScreenFlash] = useState({ active: false, time: 0, intensity: 0 });
 
   // Sample MCQ questions for Mission 1
   const questions = [
@@ -439,6 +440,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctx.save(); // Save the current state
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -652,8 +655,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
       const aimFactor = 0.2;
       const recoilFactor = 0.08;
       
-      const aimOffsetX = (canvas.width / 2 - crosshairPos.x) * aimFactor;
-      const aimOffsetY = (canvas.height / 2 - crosshairPos.y) * aimFactor;
+      // Calculate aim offset based on crosshair position
+      let aimOffsetX = (crosshairPos.x - canvas.width / 2) * aimFactor;
+      let aimOffsetY = (crosshairPos.y - canvas.height / 2) * aimFactor;
+
+      // Clamp the aim offset to a certain range
+      const maxAimOffsetX = 50; // Horizontal movement range
+      const maxAimOffsetY = 25; // Vertical movement range
+      aimOffsetX = Math.max(-maxAimOffsetX, Math.min(maxAimOffsetX, aimOffsetX));
+      aimOffsetY = Math.max(-maxAimOffsetY, Math.min(maxAimOffsetY, aimOffsetY));
       
       const currentTime = Date.now();
       const recoilTime = currentTime * 0.01;
@@ -692,9 +702,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
         } else {
           setMuzzleFlash(prev => ({ ...prev, active: false }));
         }
-      }
-    }
-  }, [enemies, gameImages, crosshairPos, muzzleFlash, hitEffects, screenShake, bullets, gunSparks, bloodParticles, enemyDeathEffects, playerDamageEffects, enemyFallingStates]);
+             }
+     }
+
+     // Draw red screen flash overlay when player is hit
+     if (screenFlash.active) {
+       const flashAge = Date.now() - screenFlash.time;
+       if (flashAge < 500) { // Flash lasts 500ms
+         const flashAlpha = screenFlash.intensity * (1 - flashAge / 500);
+         
+         ctx.save();
+         ctx.globalAlpha = flashAlpha;
+         ctx.fillStyle = '#ff0000'; // Red overlay
+         ctx.fillRect(0, 0, canvas.width, canvas.height);
+         ctx.restore();
+       } else {
+         setScreenFlash(prev => ({ ...prev, active: false }));
+       }
+     }
+
+     ctx.restore(); // Restore the saved state
+   }, [enemies, gameImages, crosshairPos, muzzleFlash, hitEffects, screenShake, screenFlash]);
 
   // Handle mouse movement for crosshair
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -802,24 +830,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
         setTimeout(() => onMissionComplete(score + 1), 1000);
       }
     } else {
-      // Wrong answer - player takes damage
-      if (score === 0) {
-        onGameOver(0);
-      } else {
-        setScore(prev => prev - 1);
-        setHealth(prev => Math.max(0, prev - 25));
-        
-        // Create player damage effects (blood from player)
-        const playerX = canvasRef.current ? canvasRef.current.width - 400 : 800;
-        const playerY = canvasRef.current ? canvasRef.current.height - 300 : 600;
-        createPlayerDamageEffects(playerX, playerY);
-        
-        toast({
-          title: "Enemy Retaliation!",
-          description: "-1 Score",
-          variant: "destructive"
-        });
-      }
+             // Wrong answer - player takes damage
+       if (score === 0) {
+         onGameOver(0);
+       } else {
+         setScore(prev => prev - 1);
+         setHealth(prev => Math.max(0, prev - 25));
+         
+         // Create player damage effects (blood from player)
+         const playerX = canvasRef.current ? canvasRef.current.width - 400 : 800;
+         const playerY = canvasRef.current ? canvasRef.current.height - 300 : 600;
+         createPlayerDamageEffects(playerX, playerY);
+         
+         // Trigger red screen flash to show player got hit
+         setScreenFlash({
+           active: true,
+           time: Date.now(),
+           intensity: 0.4 // 40% opacity red overlay
+         });
+         
+         toast({
+           title: "Enemy Retaliation!",
+           description: "-1 Score",
+           variant: "destructive"
+         });
+       }
     }
 
     setSelectedEnemy(null);
