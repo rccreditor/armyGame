@@ -27,7 +27,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
           {/* Mission Brief */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-              MISSION OBJECTIVE
+              MISSION 1 : THE FIRST CONTACT
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
               Hostile forces have infiltrated the base perimeter. Your tactical knowledge 
