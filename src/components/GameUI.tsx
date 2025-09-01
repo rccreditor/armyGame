@@ -12,7 +12,7 @@ const GameUI: React.FC<GameUIProps> = ({ score, health }) => {
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
         <div className="mcq-dialog px-6 py-3">
           <h2 className="text-xl font-bold text-primary-foreground text-center">
-            MISSION 1: INTEL BRIEFING
+            MISSION 1: THE FIRST CONTACT
           </h2>
         </div>
       </div>
