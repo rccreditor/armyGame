@@ -660,9 +660,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
       let aimOffsetY = (crosshairPos.y - canvas.height / 2) * aimFactor;
 
       // Clamp the aim offset to a certain range
-      const maxAimOffsetX = 50; // Horizontal movement range
-      const maxAimOffsetY = 25; // Vertical movement range
-      aimOffsetX = Math.max(-maxAimOffsetX, Math.min(maxAimOffsetX, aimOffsetX));
+      const maxAimOffsetRight = 25; // Right movement range
+      const maxAimOffsetLeft = 10;  // Left movement range
+      const maxAimOffsetY = 12; // Vertical movement range
+      aimOffsetX = Math.max(-maxAimOffsetLeft, Math.min(maxAimOffsetRight, aimOffsetX));
       aimOffsetY = Math.max(-maxAimOffsetY, Math.min(maxAimOffsetY, aimOffsetY));
       
       const currentTime = Date.now();

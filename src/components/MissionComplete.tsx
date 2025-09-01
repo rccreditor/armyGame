@@ -26,6 +26,10 @@ const MissionComplete: React.FC<MissionCompleteProps> = ({ score, onRestart }) =
           </div>
 
           <div className="mb-8">
+            <p className="text-2xl text-green-400">Rank update from Rookie to Soldier</p>
+          </div>
+
+          <div className="mb-8">
             <div className="grid grid-cols-2 gap-8 text-center">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="text-3xl font-bold text-primary-foreground">{score}/5</div>
@@ -45,7 +49,7 @@ const MissionComplete: React.FC<MissionCompleteProps> = ({ score, onRestart }) =
               onClick={onRestart}
               className="tactical-button text-xl px-12 py-4"
             >
-              REPLAY MISSION
+              NEXT MISSION
             </Button>
             
             <p className="text-sm text-muted-foreground">
