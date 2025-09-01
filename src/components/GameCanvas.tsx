@@ -7,6 +7,8 @@ import GameUI from './GameUI';
 import tacticalTrainingBg from '@/assets/military bg.jpg';
 import ak47Weapon from '@/assets/ak47-first-person.png';
 import enemyTransparent from '@/assets/enemy1.png';
+import firingSound from '@/assets/sounds/firing.mp3';
+import damageSound from '@/assets/sounds/damage.mp3';
 
 interface Enemy {
   id: number;
@@ -799,6 +801,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     if (!selectedEnemy) return;
 
     if (isCorrect) {
+      new Audio(firingSound).play();
       // Correct answer - enemy dies
       setEnemies(prev => prev.map(enemy => 
         enemy.id === selectedEnemy.id ? { ...enemy, alive: false } : enemy
@@ -831,6 +834,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
         setTimeout(() => onMissionComplete(score + 1), 1000);
       }
     } else {
+      new Audio(damageSound).play();
              // Wrong answer - player takes damage
        if (score === 0) {
          onGameOver(0);
