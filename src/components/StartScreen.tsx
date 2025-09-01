@@ -27,7 +27,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
           {/* Mission Brief */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-primary-foreground mb-4">
-              MISSION BRIEFING
+              MISSION OBJECTIVE
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
               Hostile forces have infiltrated the base perimeter. Your tactical knowledge 
@@ -93,7 +93,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
           </Button>
 
           <div className="mt-6 text-sm text-muted-foreground">
-            Mission 1: Intel Briefing • Difficulty: Recruit
+            Mission 2: The First Contact • Rank: Rookie
           </div>
         </div>
       </div>

@@ -21,7 +21,11 @@ const Game: React.FC = () => {
 
   const handleMissionComplete = (score: number) => {
     setFinalScore(score);
-    setGameState('completed');
+    if (score < 4) {
+      setGameState('gameOver');
+    } else {
+      setGameState('completed');
+    }
   };
 
   const restartGame = () => {

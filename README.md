@@ -1,73 +1,42 @@
-# Welcome to your Lovable project
+# Tactical Ops - Indian Army FPS Training Simulator
 
-## Project info
+This is a web-based first-person shooter training simulator with an Indian Army theme. Test your tactical knowledge through MCQ-based combat scenarios.
 
-**URL**: https://lovable.dev/projects/43ccac3e-ad19-4577-9fb4-6744ba28a2c7
+## Getting Started
 
-## How can I edit this code?
+To get a local copy up and running, follow these simple steps.
 
-There are several ways of editing your application.
+### Prerequisites
 
-**Use Lovable**
+You need to have Node.js and bun installed on your machine.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/43ccac3e-ad19-4577-9fb4-6744ba28a2c7) and start prompting.
+### Installation
 
-Changes made via Lovable will be committed automatically to this repo.
+1.  Clone the repo
+    ```sh
+    git clone https://github.com/your_username_/your_project_name.git
+    ```
+2.  Install NPM packages
+    ```sh
+    bun install
+    ```
 
-**Use your preferred IDE**
+## Available Scripts
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+In the project directory, you can run:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### `bun dev`
 
-Follow these steps:
+Runs the app in the development mode.<br />
+Open [http://localhost:8080](http://localhost:8080) to view it in the browser.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+The page will reload if you make edits.<br />
+You will also see any lint errors in the console.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### `bun build`
 
-# Step 3: Install the necessary dependencies.
-npm i
+Builds the app for production to the `dist` folder.<br />
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/43ccac3e-ad19-4577-9fb4-6744ba28a2c7) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The build is minified and the filenames include the hashes.<br />
+Your app is ready to be deployed!
