@@ -273,6 +273,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctx.save(); // Save the current state
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -357,8 +359,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
       const recoilFactor = 0.08; // Subtle recoil effect
       
       // Calculate aim offset based on crosshair position
-      const aimOffsetX = (canvas.width / 2 - crosshairPos.x) * aimFactor;
-      const aimOffsetY = (canvas.height / 2 - crosshairPos.y) * aimFactor;
+      let aimOffsetX = (crosshairPos.x - canvas.width / 2) * aimFactor;
+      let aimOffsetY = (crosshairPos.y - canvas.height / 2) * aimFactor;
+
+      // Clamp the aim offset to a certain range
+      const maxAimOffsetX = 50; // Horizontal movement range
+      const maxAimOffsetY = 25; // Vertical movement range
+      aimOffsetX = Math.max(-maxAimOffsetX, Math.min(maxAimOffsetX, aimOffsetX));
+      aimOffsetY = Math.max(-maxAimOffsetY, Math.min(maxAimOffsetY, aimOffsetY));
       
       // Add dynamic recoil effect based on time
       const currentTime = Date.now();
@@ -403,6 +411,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
         }
       }
     }
+    ctx.restore(); // Restore to the saved state
   }, [enemies, gameImages, crosshairPos, muzzleFlash, hitEffects, screenShake]);
 
   // Handle mouse movement for crosshair
