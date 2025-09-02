@@ -57,7 +57,7 @@ export const levels: LevelData[] = [
   },
   {
     id: 3,
-    name: "Level 3: Jungle Ambush",
+    name: "Mission 3: Secure The Plan",
     backgroundImg: level3Bg,
     enemyImg: enemy3,
     questions: [...level1Questions], // Use a copy of Level 1 questions

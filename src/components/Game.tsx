@@ -23,19 +23,22 @@ const Game: React.FC = () => {
   };
 
   const handleGameOver = (score: number) => {
+    // Failing a mission should allow retrying the SAME mission
     setFinalScore(score);
     setGameState('gameOver');
   };
 
   const handleMissionComplete = (score: number) => {
     setFinalScore(score);
-    if (score < 4) { // Assuming 4 is the minimum score to pass a level
+    // Require minimum score of 4 to pass the mission
+    if (score < 4) {
+      // Do NOT change currentLevelIndex; show retry screen
       setGameState('gameOver');
     } else {
       // Level completed successfully, show MissionComplete screen
       setGameState('levelCompleteScreen');
-      // Update rank based on the *completed* level
-      setRank(currentLevelIndex + 1); // Rank is 1-indexed based on level completed
+      // Update rank based on the completed level (1-indexed)
+      setRank(currentLevelIndex + 1);
     }
   };
 
@@ -49,10 +52,11 @@ const Game: React.FC = () => {
   };
 
   const restartGame = () => {
-    setGameState('start');
+    // Retry should restart the SAME mission the player failed
+    setGameState('playing');
     setFinalScore(0);
-    setCurrentLevelIndex(0);
-    setRank(0);
+    // Do not change currentLevelIndex here
+    // Keep rank as-is or derive from completed levels
   };
 
   switch (gameState) {
