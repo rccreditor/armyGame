@@ -2,11 +2,10 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import MCQDialog from './MCQDialog';
 import GameUI from './GameUI';
+import { LevelData, Question } from '../data/levels'; // Import LevelData and Question interfaces
 
-// Import game assets
-import tacticalTrainingBg from '@/assets/military bg.jpg';
+// Import game assets that are constant across levels
 import ak47Weapon from '@/assets/ak47-first-person.png';
-import enemyTransparent from '@/assets/enemy1.png';
 import firingSound from '@/assets/sounds/firing.mp3';
 import damageSound from '@/assets/sounds/damage.mp3';
 
@@ -18,11 +17,7 @@ interface Enemy {
   height: number;
   alive: boolean;
   image: HTMLImageElement;
-  question: {
-    text: string;
-    options: string[];
-    correctAnswer: number;
-  };
+  question: Question; // Use imported Question interface
   // Animation properties
   startX: number;
   startY: number;
@@ -36,9 +31,11 @@ interface Enemy {
 interface GameCanvasProps {
   onGameOver: (finalScore: number) => void;
   onMissionComplete: (finalScore: number) => void;
+  levelData: LevelData; // New prop for current level data
+  rank: number; // New prop for rank
 }
 
-const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }) => {
+const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, levelData, rank }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState(0);
   const [health, setHealth] = useState(100);
@@ -62,39 +59,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
   const [enemyFallingStates, setEnemyFallingStates] = useState<Array<{enemyId: number, startTime: number, startX: number, startY: number, phase: number}>>([]);
   const [screenFlash, setScreenFlash] = useState({ active: false, time: 0, intensity: 0 });
 
-  // Sample MCQ questions for Mission 1
-  const questions = [
-    {
-      text: "What is the primary objective of infantry tactics?",
-      options: ["Speed", "Terrain Control", "Heavy Firepower", "Air Support"],
-      correctAnswer: 1
-    },
-    {
-      text: "Which formation provides best protection during advance?",
-      options: ["Single File", "Wedge Formation", "Line Formation", "Column Formation"],
-      correctAnswer: 1
-    },
-    {
-      text: "What does 'RV' stand in military terminology?",
-      options: ["Rapid Vehicle", "Rendezvous Point", "Radio Vector", "Recon Vehicle"],
-      correctAnswer: 1
-    },
-    {
-      text: "Which is the most effective cover during enemy fire?",
-      options: ["Trees", "Concrete Walls", "Metal Sheets", "Sand Bags"],
-      correctAnswer: 1
-    },
-    {
-      text: "What is the standard field of fire for a rifle squad?",
-      options: ["90 degrees", "180 degrees", "270 degrees", "360 degrees"],
-      correctAnswer: 1
-    }
-  ];
-
   // Enemy movement patterns
   const getMovementPattern = (index: number) => {
     const patterns: ('patrol' | 'cover' | 'advance' | 'strafe')[] = ['patrol', 'cover', 'advance', 'strafe', 'cover'];
-    return patterns[index];
+    return patterns[index % patterns.length]; // Use modulo to cycle through patterns
   };
 
   // Create bullet with trajectory
@@ -210,54 +178,59 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
     }]);
   }, []);
 
-  // Load images
+  // Load images and initialize enemies based on levelData
   useEffect(() => {
-    const loadImages = async () => {
-      // Load background
-      const bgImg = new Image();
-      bgImg.src = tacticalTrainingBg;
+    const loadLevelAssets = async () => {
+      // Reset score and health for new level
+      setScore(0);
+      setHealth(100);
 
-      // Load weapon
+      // Load background image for the current level
+      const bgImg = new Image();
+      bgImg.src = levelData.backgroundImg;
+
+      // Load weapon image (constant across levels)
       const weaponImg = new Image();
       weaponImg.src = ak47Weapon;
 
-      // Load single transparent enemy image
+      // Load enemy image for the current level
       const enemyImg = new Image();
-      enemyImg.src = enemyTransparent;
+      enemyImg.src = levelData.enemyImg;
 
       await Promise.all([
         new Promise(resolve => bgImg.onload = resolve),
         new Promise(resolve => weaponImg.onload = resolve),
-        new Promise(resolve => enemyImg.onload = resolve)
+        new Promise(resolve => {
+          enemyImg.onload = resolve;
+          enemyImg.onerror = () => {
+            console.error("Failed to load enemy image:", levelData.enemyImg);
+            resolve(null); // Resolve even on error to not block Promise.all
+          };
+        })
       ]);
+
+      console.log("Loaded assets for level:", levelData.name);
+      console.log("Background image src:", bgImg.src);
+      console.log("Enemy image src:", enemyImg.src);
 
       setGameImages({
         background: bgImg,
         weapon: weaponImg,
-        enemies: [enemyImg]
+        enemies: [enemyImg] // Assuming one enemy image per level type
       });
 
-      // Define enemy positions for a 2-1-2 layout
-      const enemyPositions = [
-        { x: 100, y: 450 }, // Far left
-        { x: 350, y: 460 }, // Near left
-        { x: 860, y: 450 }, // Middle
-        { x: 1370, y: 460 }, // Near right
-        { x: 1620, y: 450 }  // Far right
-      ];
-
-      // Initialize 5 enemies with movement patterns
-      const initialEnemies: Enemy[] = questions.map((question, index) => ({
+      // Initialize enemies for the current level
+      const initialEnemies: Enemy[] = levelData.questions.map((question, index) => ({
         id: index,
-        x: enemyPositions[index].x,
-        y: enemyPositions[index].y,
-        width: 200,
-        height: 400,
+        x: levelData.enemyPositions[index].x,
+        y: levelData.enemyPositions[index].y,
+        width: levelData.enemyWidth,
+        height: levelData.enemyHeight,
         alive: true,
         image: enemyImg,
         question: question,
-        startX: enemyPositions[index].x,
-        startY: enemyPositions[index].y,
+        startX: levelData.enemyPositions[index].x,
+        startY: levelData.enemyPositions[index].y,
         movementPattern: getMovementPattern(index),
         movementPhase: 0,
         lastMovementTime: 0,
@@ -268,8 +241,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
       setEnemies(initialEnemies);
     };
 
-    loadImages();
-  }, []);
+    loadLevelAssets();
+  }, [levelData]); // Re-run effect when levelData changes
 
   // Update enemy positions based on movement patterns
   const updateEnemyMovement = useCallback((deltaTime: number) => {
@@ -911,7 +884,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete }
       />
 
       {/* Game UI */}
-      <GameUI score={score} health={health} />
+      <GameUI score={score} health={health} levelData={levelData} rank={rank} />
 
       {/* MCQ Dialog */}
       {selectedEnemy && (
