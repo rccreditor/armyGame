@@ -2,15 +2,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Play, Target, Award, Shield } from 'lucide-react';
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Play, Target, Award, Shield } from 'lucide-react';
-
-interface StartScreenProps {
+interface StartScreenLevel1Props {
   onStartGame: () => void;
 }
 
-const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
+const StartScreenLevel1: React.FC<StartScreenLevel1Props> = ({ onStartGame }) => {
   return (
     <div className="min-h-screen bg-tactical-dark flex items-center justify-center">
       <div className="text-center max-w-4xl px-6">
@@ -34,8 +30,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
               MISSION 1 : THE FIRST CONTACT
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Hostile forces have infiltrated the base perimeter. Your tactical knowledge 
-              and quick decision-making skills are required to neutralize the threats. 
+              Hostile forces have infiltrated the base perimeter. Your tactical knowledge
+              and quick decision-making skills are required to neutralize the threats.
               Each engagement requires correct tactical analysis before firing.
             </p>
           </div>
@@ -96,13 +92,11 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStartGame }) => {
             START MISSION
           </Button>
 
-          <div className="mt-6 text-sm text-muted-foreground">
-            Mission 2: The First Contact • Rank: Rookie
-          </div>
+          
         </div>
       </div>
     </div>
   );
 };
 
-export default StartScreen;
+export default StartScreenLevel1;

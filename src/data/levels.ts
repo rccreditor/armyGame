@@ -38,26 +38,26 @@ export const levels: LevelData[] = [
     enemyImg: enemy1,
     questions: [...level1Questions],
     enemyPositions: [
-      { x: 100, y: 450 }, { x: 350, y: 460 }, { x: 860, y: 450 }, { x: 1370, y: 460 }, { x: 1620, y: 450 }
+      { x: 100, y: 400 }, { x: 350, y: 410 }, { x: 860, y: 400 }, { x: 1370, y: 410 }, { x: 1620, y: 400 }
     ],
-    enemyWidth: 200,
-    enemyHeight: 400
+    enemyWidth: 300,
+    enemyHeight: 440
   },
   {
     id: 2,
-    name: "Level 2: Urban Warfare",
+    name: "Level 2: Needs Recon",
     backgroundImg: level2Bg,
     enemyImg: enemy2,
     questions: [...level1Questions], // Use a copy of Level 1 questions
     enemyPositions: [
-      { x: 200, y: 400 }, { x: 500, y: 420 }, { x: 800, y: 400 }, { x: 1100, y: 420 }, { x: 1400, y: 400 }
+      { x: 200, y: 300 }, { x: 500, y: 320 }, { x: 800, y: 300 }, { x: 1100, y: 320 }, { x: 1400, y: 300 }
     ],
     enemyWidth: 350,
     enemyHeight: 740
   },
   {
     id: 3,
-    name: "Level 3: Jungle Ambush",
+    name: "Mission 3: Secure The Plan",
     backgroundImg: level3Bg,
     enemyImg: enemy3,
     questions: [...level1Questions], // Use a copy of Level 1 questions
