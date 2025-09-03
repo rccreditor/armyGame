@@ -30,7 +30,7 @@ interface Enemy {
 
 interface GameCanvasProps {
   onGameOver: (finalScore: number) => void;
-  onMissionComplete: (finalScore: number) => void;
+  onMissionComplete: (finalScore: number, newRank: number) => void;
   levelData: LevelData; // New prop for current level data
   rank: number; // New prop for rank
 }
@@ -220,23 +220,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
       });
 
       // Initialize enemies for the current level
-      const initialEnemies: Enemy[] = levelData.questions.map((question, index) => ({
-        id: index,
-        x: levelData.enemyPositions[index].x,
-        y: levelData.enemyPositions[index].y,
-        width: levelData.enemyWidth,
-        height: levelData.enemyHeight,
-        alive: true,
-        image: enemyImg,
-        question: question,
-        startX: levelData.enemyPositions[index].x,
-        startY: levelData.enemyPositions[index].y,
+      const initialEnemies: Enemy[] = levelData.questions.map((question, index) => {
+        let enemyWidth = levelData.enemyWidth;
+        let enemyHeight = levelData.enemyHeight * 1.2; // Increased height by 20%
+        let enemyYOffset = 30; // Moved lower by 30 pixels
+
+        // Apply specific changes for Level 3
+        if (levelData.id === 3) { // Assuming levelData.id is 1-indexed
+          enemyWidth = levelData.enemyWidth * 1.5; // Increase size by 50%
+          enemyHeight = levelData.enemyHeight * 1.6; // Increase size by 50%
+          enemyYOffset += 40; // Move lower by an additional 50 pixels
+        }
+
+        return {
+          id: index,
+          x: levelData.enemyPositions[index].x,
+          y: levelData.enemyPositions[index].y + enemyYOffset,
+          width: enemyWidth,
+          height: enemyHeight,
+          alive: true,
+          image: enemyImg,
+          question: question,
+          startX: levelData.enemyPositions[index].x,
+          startY: levelData.enemyPositions[index].y + enemyYOffset,
         movementPattern: getMovementPattern(index),
         movementPhase: 0,
         lastMovementTime: 0,
         movementSpeed: 0.5 + Math.random() * 0.5,
         direction: Math.random() > 0.5 ? 1 : -1
-      }));
+        };
+      });
 
       setEnemies(initialEnemies);
     };
@@ -804,7 +817,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
 
       const remainingEnemies = enemies.filter(e => e.alive && e.id !== selectedEnemy.id);
       if (remainingEnemies.length === 0) {
-        setTimeout(() => onMissionComplete(score + 1), 1000);
+        setTimeout(() => onMissionComplete(score + 1, rank + 1), 1000);
       }
     } else {
       new Audio(damageSound).play();

@@ -31,6 +31,11 @@ const MissionComplete: React.FC<MissionCompleteProps> = ({ score, onRestart, mes
             <h1 className="text-6xl font-bold text-primary-foreground mb-4">
               {message || "MISSION COMPLETE"}
             </h1>
+            {rank !== undefined && (
+              <p className="text-3xl font-semibold text-green-500 mb-4">
+                Congrats Rank Up! You are now a {getRankText(rank)}!
+              </p>
+            )}
             <div className="w-full h-2 bg-primary/20 rounded mb-6">
               <div className="w-full h-full bg-primary rounded animate-pulse" />
             </div>
@@ -70,11 +75,7 @@ const MissionComplete: React.FC<MissionCompleteProps> = ({ score, onRestart, mes
               {message && message.includes("all levels") ? "PLAY AGAIN" : "NEXT MISSION"}
             </Button>
             
-            {!(message && message.includes("all levels")) && (
-              <p className="text-sm text-muted-foreground">
-                Mission {rank} Complete • More missions coming soon
-              </p>
-            )}
+            
           </div>
         </div>
       </div>
