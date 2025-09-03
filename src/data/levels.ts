@@ -40,7 +40,7 @@ export const levels: LevelData[] = [
     enemyPositions: [
       { x: 100, y: 400 }, { x: 350, y: 410 }, { x: 860, y: 400 }, { x: 1370, y: 410 }, { x: 1620, y: 400 }
     ],
-    enemyWidth: 400,
+    enemyWidth: 300,
     enemyHeight: 440
   },
   {
