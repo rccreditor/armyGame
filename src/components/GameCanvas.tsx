@@ -5,9 +5,10 @@ import GameUI from './GameUI';
 import { LevelData, Question } from '../data/levels'; // Import LevelData and Question interfaces
 
 // Import game assets that are constant across levels
-import ak47Weapon from '@/assets/ak47-first-person.png';
+import ak47Weapon from '@/assets/ak47-first-person.webp';
 import firingSound from '@/assets/sounds/firing.mp3';
 import damageSound from '@/assets/sounds/damage.mp3';
+import deadEnemyImage from '@/assets/deadenemy.webp'; // Add your dead enemy image here
 
 interface Enemy {
   id: number;
@@ -46,6 +47,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
     background?: HTMLImageElement;
     weapon?: HTMLImageElement;
     enemies: HTMLImageElement[];
+    deadEnemy?: HTMLImageElement;
   }>({ enemies: [] });
   const [lastFrameTime, setLastFrameTime] = useState(0);
   const [muzzleFlash, setMuzzleFlash] = useState({ active: false, x: 0, y: 0, time: 0 });
@@ -197,6 +199,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
       const enemyImg = new Image();
       enemyImg.src = levelData.enemyImg;
 
+      // Load dead enemy image
+      const deadEnemyImg = new Image();
+      deadEnemyImg.src = deadEnemyImage;
+
       await Promise.all([
         new Promise(resolve => bgImg.onload = resolve),
         new Promise(resolve => weaponImg.onload = resolve),
@@ -204,6 +210,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
           enemyImg.onload = resolve;
           enemyImg.onerror = () => {
             console.error("Failed to load enemy image:", levelData.enemyImg);
+            resolve(null); // Resolve even on error to not block Promise.all
+          };
+        }),
+        new Promise(resolve => {
+          deadEnemyImg.onload = resolve;
+          deadEnemyImg.onerror = () => {
+            console.error("Failed to load dead enemy image:", deadEnemyImage);
             resolve(null); // Resolve even on error to not block Promise.all
           };
         })
@@ -216,7 +229,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
       setGameImages({
         background: bgImg,
         weapon: weaponImg,
-        enemies: [enemyImg] // Assuming one enemy image per level type
+        enemies: [enemyImg], // Assuming one enemy image per level type
+        deadEnemy: deadEnemyImg
       });
 
       // Initialize enemies for the current level
@@ -415,8 +429,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
        const currentTime = Date.now();
        const timeSinceStart = currentTime - state.startTime;
        
-       // Remove states older than 1 second
-       return timeSinceStart < 1000;
+       // Remove states older than 1.5 seconds (falling animation only)
+       return timeSinceStart < 1500;
      }));
   }, []);
 
@@ -469,22 +483,45 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
         
         ctx.restore();
       } else {
-        // Draw fallen enemy on the ground
+        // Draw fallen enemy with new falling animation
         const fallingState = enemyFallingStates.find(state => state.enemyId === enemy.id);
         if (fallingState) {
           const timeSinceStart = Date.now() - fallingState.startTime;
-          const fallProgress = Math.min(timeSinceStart / 1000, 1); // 1 second fall
-          const fallDistance = 80; // Fall 80 pixels
-          const currentY = fallingState.startY + (fallProgress * fallDistance);
+          const fallProgress = Math.min(timeSinceStart / 1500, 1); // 1.5 second fall
+          
+          // Falling animation phase only - no persistent display
+          // Enhanced falling physics with gravity acceleration
+          const gravity = 0.8;
+          const fallDistance = 60 + (fallProgress * fallProgress * 40); // Reduced fall distance to stay on screen
+          const currentY = Math.min(fallingState.startY + fallDistance, canvas.height - 100); // Ensure it doesn't go below screen
+          
+          // More dramatic rotation with wobble effect
+          const baseRotation = fallProgress * Math.PI / 3; // 60 degrees total rotation
+          const wobble = Math.sin(fallProgress * Math.PI * 4) * 0.1; // Wobble effect
+          const totalRotation = baseRotation + wobble;
+          
+          // Fade out as it falls
+          const alpha = Math.max(0.1, 1 - (fallProgress * 0.8));
+          
+          // Scale down more dramatically as it falls
+          const scaleX = 0.6 - (fallProgress * 0.3);
+          const scaleY = 0.3 - (fallProgress * 0.2);
           
           ctx.save();
-          ctx.globalAlpha = 0.7; // Slight fade for fallen enemy
+          ctx.globalAlpha = alpha;
           ctx.translate(enemy.x + enemy.width / 2, currentY + enemy.height / 2);
-          ctx.rotate(fallProgress * Math.PI / 6); // Rotate as it falls
+          ctx.rotate(totalRotation);
+          ctx.scale(scaleX, scaleY);
           
-          // Draw enemy lying down (scaled down to simulate being on ground)
-          ctx.scale(0.7, 0.4);
-          ctx.drawImage(enemy.image, -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
+          // Add shadow effect for depth
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 15;
+          ctx.shadowOffsetX = 5;
+          ctx.shadowOffsetY = 8;
+          
+          // Use dead enemy image if available, otherwise fallback to regular enemy image
+          const imageToDraw = gameImages.deadEnemy || enemy.image;
+          ctx.drawImage(imageToDraw, -enemy.width / 2, -enemy.height / 2, enemy.width, enemy.height);
           
           ctx.restore();
         }
@@ -604,33 +641,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ onGameOver, onMissionComplete, 
       ctx.restore();
     });
 
-    // Draw enemy falling states
-    enemyFallingStates.forEach(state => {
-      const currentTime = Date.now();
-      const timeSinceStart = currentTime - state.startTime;
-
-      if (timeSinceStart < 1000) { // Falling animation lasts 1 second
-        const phase = state.phase;
-        let newY = state.startY;
-
-        if (phase === 0) {
-          newY = state.startY - (timeSinceStart * 0.5); // Fall down
-        } else if (phase === 1) {
-          newY = state.startY + (timeSinceStart * 0.5); // Rise up
-        }
-
-        ctx.save();
-        ctx.globalAlpha = 1 - (timeSinceStart / 1000); // Fade out as it rises
-        ctx.fillStyle = '#ff0000'; // Red blood
-        ctx.shadowColor = '#ff0000';
-        ctx.shadowBlur = 3;
-        
-        ctx.beginPath();
-        ctx.arc(state.startX, newY, 10, 0, Math.PI * 2); // Smaller blood splatter
-        ctx.fill();
-        ctx.restore();
-      }
-    });
 
     // Draw weapon with enhanced aim movement
     if (gameImages.weapon) {
