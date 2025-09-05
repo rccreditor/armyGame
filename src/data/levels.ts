@@ -1,9 +1,9 @@
-import tacticalTrainingBg from '@/assets/military bg.jpg';
-import enemy1 from '@/assets/enemy1.png';
-import level2Bg from '@/assets/level2_bg.jpg';
-import enemy2 from '@/assets/enemy2.png';
-import level3Bg from '@/assets/level3_bg.jpg';
-import enemy3 from '@/assets/enemy3.png';
+import tacticalTrainingBg from '@/assets/military bg.webp';
+import enemy1 from '@/assets/enemy1.webp';
+import level2Bg from '@/assets/level2_bg.webp';
+import enemy2 from '@/assets/enemy2.webp';
+import level3Bg from '@/assets/level3_bg.webp';
+import enemy3 from '@/assets/enemy3.webp';
 
 export interface Question {
   text: string;
